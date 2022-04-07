@@ -1,0 +1,10 @@
+matplotlib
+pandas
+streamlit
+seaborn
+joblib
+io
+numpy
+sklearn
+time
+streamlit_option_menu
