@@ -75,6 +75,7 @@ if choose=="Preparation":
             # clean = clean.dropna()
             clean = df.copy()
             clean.rename(columns = {'kelas':'Decision'}, inplace = True)
+            clean['BB'] = clean['BB'].replace(',', '.', regex=True).astype('str').astype('float')
             clean = clean.reset_index(drop=True)
 
             if st.button('Re-Test'):
@@ -167,7 +168,7 @@ if choose=="Prediction":
         pendidikan = st.selectbox(
         'Pendidikan Terakhir?',
         (text_option,'SD', 'SMP', 'SMA', 'PERGURUAN TINGGI'))
-        if pendidikan==text_option: pendidikan=100
+        if pendidikan==text_option: pendidikan=1000
         if pendidikan=='SD': pendidikan=1
         if pendidikan=='SMP': pendidikan=2
         if pendidikan=='SMA': pendidikan=3
@@ -192,7 +193,7 @@ if choose=="Prediction":
                     'TNI',
                     'WIRASWASTA'))
         
-        if pekerjaan==text_option: pekerjaan=100
+        if pekerjaan==text_option: pekerjaan=1000
         if pekerjaan=='ACOUNTING': pekerjaan=1
         if pekerjaan=='APOTEKER': pekerjaan=2
         if pekerjaan=='BURUH': pekerjaan=3
@@ -218,7 +219,7 @@ if choose=="Prediction":
         usia_kehamilan = st.number_input('Usia kehamilan (minggu)', value=0, max_value=50)
         if usia_kehamilan<14 and usia_kehamilan>0: usia_kehamilan=1
         if usia_kehamilan>13 and usia_kehamilan<28: usia_kehamilan=2
-        if usia_kehamilan==0: usia_kehamilan=100
+        if usia_kehamilan==0: usia_kehamilan=1000
         else: usia_kehamilan=3
 
         #Ketik tekanan darah sistol dan diastol
@@ -227,12 +228,12 @@ if choose=="Prediction":
         BPD = st.number_input('Diastol', value=0, max_value=200)
         if BPS !=0 and BPD!=0:
             if BPS>120 and BPD>80: BP = 1
-        else: BP=100
+        else: BP=1000
         
         # #Ketik berat badan
-        # BB = st.number_input('Berat badan', value=0.)
-        # if BB !=0:
-        #     st.write('The current number is ', BB)
+        BB = st.number_input('Berat badan', value=0.)
+        if BB==0.: BB=1000
+        
 
         #Pilih Jenis Kehamilan
         jenis = st.selectbox(
@@ -240,11 +241,11 @@ if choose=="Prediction":
         (text_option,'Normal', 'Kembar'))
         if jenis=='Normal': jenis=0
         if jenis=='Kembar': jenis=1
-        if jenis==text_option: jenis=100
+        if jenis==text_option: jenis=1000
 
         #Pilih frekuensi kehamilan
         frekuensi = st.number_input('Kehamilan ke-', value=1, max_value=10)
-        # if frekuensi !=0:
+        if frekuensi ==0: frekuensi=1000
         #     st.write('The current number is ', frekuensi)
 
         #Pilih paritas
@@ -261,7 +262,7 @@ if choose=="Prediction":
         riwayat_melahirkan = st.selectbox(
         'Riwayat Melahirkan?',
         (text_option,'Belum', 'Normal', 'Caesar', 'Ekstraksi Vakum'))
-        if riwayat_melahirkan==text_option: riwayat_melahirkan=100
+        if riwayat_melahirkan==text_option: riwayat_melahirkan=1000
         if riwayat_melahirkan=='Belum': riwayat_melahirkan=0
         if riwayat_melahirkan=='Normal': riwayat_melahirkan=1
         if riwayat_melahirkan=='Caesar': riwayat_melahirkan=2
@@ -312,7 +313,7 @@ if choose=="Prediction":
         proteinuria = st.selectbox(
         'Proteinuira?',
         (text_option,'Negatif', 'Trace', 'Positif 1', 'Positif 2', 'Positif 3', 'Positif 4'))
-        if proteinuria==text_option: proteinuria=100
+        if proteinuria==text_option: proteinuria=1000
         if proteinuria=='Negatif': proteinuria=0
         if proteinuria=='Trace': proteinuria=1
         if proteinuria=='Positif 1': proteinuria=2
@@ -326,13 +327,13 @@ if choose=="Prediction":
             model = joblib.load('model_c45.sav')
         
             X_predict = [[pendidikan, pekerjaan, umur, usia_kehamilan,
-                    BP, jenis, frekuensi, paritas,
+                    BP, BB, jenis, frekuensi, paritas,
                     abortus, riwayat_melahirkan, IsTBC, IsAsma,
                     IsDiabetes, IsHipertensi, IsHepatitis, 
                     IsJantung, IsPe, IsPeb, IsBatuEmpedu,
                     IsMagh, proteinuria]]
             # st.write(X_predict[0])
-            if np.array(X_predict[0]).sum()>99:
+            if np.array(X_predict[0]).sum()>999:
                 st.error('Isi semua form terlebih dahulu.')
             else:
                 result = model.predict(X_predict)
