@@ -91,11 +91,11 @@ if choose=="Preparation":
                     joblib.dump(clf, 'model_c45.sav')
                     st.error('Model saved')
 
-                    kfold = KFold(10, True, 1)
+                    kfold = KFold(n_splits=10, shuffle=True, random_state=1)
                     train_res = []
                     test_res = []
                     st.warning(f'10 Fold cross validation')
-                    for train, test in kfold.split(X_test):
+                    for train, test in kfold.split(clean):
                         X_train = clean[clean.columns[:-1]].iloc[train]
                         y_train = np.ravel(clean[clean.columns[-1:]].iloc[train])
                         X_test = clean[clean.columns[:-1]].iloc[test]
@@ -126,11 +126,11 @@ if choose=="Preparation":
                     joblib.dump(clf, 'model_c45.sav')
                     st.error('Model saved')
 
-                    kfold = KFold(10, True, 1)
+                    kfold = KFold(n_splits=10, shuffle=True, random_state=1)
                     train_res = []
                     test_res = []
                     st.warning(f'10 Fold cross validation')
-                    for train, test in kfold.split(X_test):
+                    for train, test in kfold.split(clean):
                         X_train = clean[clean.columns[:-1]].iloc[train]
                         y_train = np.ravel(clean[clean.columns[-1:]].iloc[train])
                         X_test = clean[clean.columns[:-1]].iloc[test]
