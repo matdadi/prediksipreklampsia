@@ -102,7 +102,7 @@ if choose=="Preparation":
                     df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
                     st.dataframe(df_metrik)
 
-                    kfold = KFold(10, True)
+                    kfold = KFold(n_splits=10, shuffle=True)
                     train_res = []
                     test_res = []
                     metrik = []
@@ -143,7 +143,7 @@ if choose=="Preparation":
                     df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
                     st.dataframe(df_metrik)
 
-                    kfold = KFold(10, True)
+                    kfold = KFold(n_splits=10, shuffle=True)
                     train_res = []
                     test_res = []
                     metrik = []
