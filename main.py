@@ -12,9 +12,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
-import time
 from streamlit_option_menu import option_menu
-
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 #parameter
 text_option = '- Pilih -'
@@ -23,6 +22,17 @@ st.set_page_config(layout="wide")
 
 matplotlib.use('agg')
 _lock=RendererAgg.lock
+
+# CSS to inject contained in a string
+hide_dataframe_row_index = """
+            <style>
+            .row_heading.level0 {display:none}
+            .blank {display:none}
+            </style>
+            """
+
+# Inject CSS with Markdown
+st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 
 with st.sidebar:
     choose = option_menu("Menu", ["Preparation", "Prediction"],
@@ -79,23 +89,27 @@ if choose=="Preparation":
             clean = clean.reset_index(drop=True)
 
             if st.button('Re-Test'):
-                with st.spinner("Training dataset..."):
+                with st.spinner("Re-training dataset..."):
                     clf = C45(attrNames=clean.columns[:-1])
                     X_train, X_test, y_train, y_test = train_test_split(clean[clean.columns[:-1]], clean['Decision'], test_size=0.2, shuffle=True)
                     C45(attrNames=['n', 'pe', 'peb'])
                     train = clf.fit(X_train, y_train)
                     test = clf.predict(X_test)
-                    info_res = "Training accuracy: {:.2f}".format(accuracy_score(y_train, train.y_)*100) + "%, Testing accuracy: {:.2f}".format(accuracy_score(y_test, test)*100)
-                    st.warning(f'Split training')
-                    st.info(info_res)
-                    joblib.dump(clf, 'model_c45.sav')
-                    st.error('Model saved')
+                    eval = precision_recall_fscore_support(y_test, test)
 
-                    kfold = KFold(n_splits=10, shuffle=True, random_state=1)
+                    st.warning(f'Split testing data 20%')
+                    metrik = [[1, accuracy_score(y_test, test), eval[0].mean(), eval[1].mean(), eval[2].mean()]]
+                    df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
+                    st.dataframe(df_metrik)
+
+                    kfold = KFold(10, True)
                     train_res = []
                     test_res = []
+                    metrik = []
+                    idx = 0
                     st.warning(f'10 Fold cross validation')
                     for train, test in kfold.split(clean):
+                        idx+=1
                         X_train = clean[clean.columns[:-1]].iloc[train]
                         y_train = np.ravel(clean[clean.columns[-1:]].iloc[train])
                         X_test = clean[clean.columns[:-1]].iloc[test]
@@ -105,12 +119,14 @@ if choose=="Preparation":
                         test = clf.predict(X_test)
                         train_res.append(accuracy_score(y_train, y_trained.y_))
                         test_res.append(accuracy_score(y_test, test))
-                        # info_res = "Training accuracy: {:.2f}".format(accuracy_score(y_train, y_trained.y_)*100) + "%, Testing accuracy: {:.2f}".format(accuracy_score(y_test, test)*100)+"%"
-                        # st.info(info_res)
-                        # st.write('')
-                    info_res = "Validated training accuracy: {:.2f}".format(np.array(train_res).mean()*100) + "%, Validated Testing accuracy: {:.2f}".format(np.array(test_res).mean()*100)+"%"
-                    # info_res = "Validated Testing accuracy: {:.2f}".format(np.array(test_res).mean()*100)+"%"
-                    st.info(info_res)
+                        eval = precision_recall_fscore_support(y_test, test)
+                        metrik.append([idx, accuracy_score(y_test, test), eval[0].mean(), eval[1].mean(), eval[2].mean()])
+                        
+                    df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
+                    st.dataframe(df_metrik)
+                
+                joblib.dump(clf, 'model_c45.sav')
+                st.success('Model saved')
                 st.success("Done!")
                 
             else:
@@ -120,17 +136,21 @@ if choose=="Preparation":
                     C45(attrNames=['n', 'pe', 'peb'])
                     train = clf.fit(X_train, y_train)
                     test = clf.predict(X_test)
-                    info_res = "Training accuracy: {:.2f}".format(accuracy_score(y_train, train.y_)*100) + "%, Testing accuracy: {:.2f}".format(accuracy_score(y_test, test)*100)
-                    st.warning(f'Split training')
-                    st.info(info_res)
-                    joblib.dump(clf, 'model_c45.sav')
-                    st.error('Model saved')
+                    eval = precision_recall_fscore_support(y_test, test)
 
-                    kfold = KFold(n_splits=10, shuffle=True, random_state=1)
+                    st.warning(f'Split testing data 20%')
+                    metrik = [[1, accuracy_score(y_test, test), eval[0].mean(), eval[1].mean(), eval[2].mean()]]
+                    df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
+                    st.dataframe(df_metrik)
+
+                    kfold = KFold(10, True)
                     train_res = []
                     test_res = []
+                    metrik = []
+                    idx = 0
                     st.warning(f'10 Fold cross validation')
                     for train, test in kfold.split(clean):
+                        idx+=1
                         X_train = clean[clean.columns[:-1]].iloc[train]
                         y_train = np.ravel(clean[clean.columns[-1:]].iloc[train])
                         X_test = clean[clean.columns[:-1]].iloc[test]
@@ -140,12 +160,14 @@ if choose=="Preparation":
                         test = clf.predict(X_test)
                         train_res.append(accuracy_score(y_train, y_trained.y_))
                         test_res.append(accuracy_score(y_test, test))
-                        # info_res = "Training accuracy: {:.2f}".format(accuracy_score(y_train, y_trained.y_)*100) + "%, Testing accuracy: {:.2f}".format(accuracy_score(y_test, test)*100)+"%"
-                        # st.info(info_res)
-                        # st.write('')
-                    info_res = "Validated training accuracy: {:.2f}".format(np.array(train_res).mean()*100) + "%, Validated Testing accuracy: {:.2f}".format(np.array(test_res).mean()*100)+"%"
-                    # info_res = "Validated Testing accuracy: {:.2f}".format(np.array(test_res).mean()*100)+"%"
-                    st.info(info_res)
+                        eval = precision_recall_fscore_support(y_test, test)
+                        metrik.append([idx, accuracy_score(y_test, test), eval[0].mean(), eval[1].mean(), eval[2].mean()])
+                        
+                    df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
+                    st.dataframe(df_metrik)
+                
+                joblib.dump(clf, 'model_c45.sav')
+                st.success('Model saved')
                 st.success("Done!")
                
 
@@ -195,20 +217,20 @@ if choose=="Prediction":
         
         if pekerjaan==text_option: pekerjaan=1000
         if pekerjaan=='ACOUNTING': pekerjaan=1
-        if pekerjaan=='APOTEKER': pekerjaan=2
-        if pekerjaan=='BURUH': pekerjaan=3
-        if pekerjaan=='DOKTER': pekerjaan=4
-        if pekerjaan=='GURU': pekerjaan=5
-        if pekerjaan=='HONORER': pekerjaan=6
-        if pekerjaan=='IRT': pekerjaan=7
-        if pekerjaan=='MAHASISWA': pekerjaan=8
-        if pekerjaan=='PNS': pekerjaan=9
-        if pekerjaan=='POLISI': pekerjaan=10
-        if pekerjaan=='SATPOL PP': pekerjaan=11
-        if pekerjaan=='SECURITY': pekerjaan=12
-        if pekerjaan=='SWASTA': pekerjaan=13
-        if pekerjaan=='TNI': pekerjaan=14
-        if pekerjaan=='WIRASWASTA': pekerjaan=15
+        if pekerjaan=='APOTEKER': pekerjaan=1
+        if pekerjaan=='BURUH': pekerjaan=1
+        if pekerjaan=='DOKTER': pekerjaan=1
+        if pekerjaan=='GURU': pekerjaan=1
+        if pekerjaan=='HONORER': pekerjaan=1
+        if pekerjaan=='IRT': pekerjaan=0
+        if pekerjaan=='MAHASISWA': pekerjaan=0
+        if pekerjaan=='PNS': pekerjaan=1
+        if pekerjaan=='POLISI': pekerjaan=1
+        if pekerjaan=='SATPOL PP': pekerjaan=1
+        if pekerjaan=='SECURITY': pekerjaan=1
+        if pekerjaan=='SWASTA': pekerjaan=1
+        if pekerjaan=='TNI': pekerjaan=1
+        if pekerjaan=='WIRASWASTA': pekerjaan=1
 
         #Ketik umur
         umur = st.number_input('Umur', value=0, max_value=60)
@@ -243,20 +265,19 @@ if choose=="Prediction":
         if jenis=='Kembar': jenis=1
         if jenis==text_option: jenis=1000
 
-        #Pilih frekuensi kehamilan
-        frekuensi = st.number_input('Kehamilan ke-', value=1, max_value=10)
-        if frekuensi ==0: frekuensi=1000
-        #     st.write('The current number is ', frekuensi)
-
         #Pilih paritas
         paritas = st.number_input('Paritas', value=0, max_value=10)
-        # if paritas !=0:
-        #     st.write('The current number is ', paritas)
+        if paritas==2 and paritas==3:
+            paritas=0
+        else: paritas=1
 
         #Pilih riwayat aborsi
-        abortus = st.number_input('Riwayat aborsi', value=0, max_value=10)
-        # if abortus !=0:
-        #     st.write('The current number is ', abortus)
+        abortus = st.selectbox(
+        'Riwayat Abortus?',
+        (text_option,'Belum', 'Pernah'))
+        if abortus=='Belum': abortus=0
+        if abortus=='Pernah': abortus=1
+        if abortus==text_option: abortus=1000
 
         #Pilih riwayat melahirkan
         riwayat_melahirkan = st.selectbox(
@@ -280,35 +301,39 @@ if choose=="Prediction":
         IsPeb = st.checkbox('Peb')
         IsTBC = st.checkbox('TBC')
         IsMagh = st.checkbox('Magh')
-        if IsAsma==True: IsAsma=1
+
+        IsPenyakit=0
+        if IsAsma==True: IsPenyakit=1
         else: IsAsma=0
 
-        if IsBatuEmpedu==True: IsBatuEmpedu=1
+        if IsBatuEmpedu==True: IsPenyakit=1
         else: IsBatuEmpedu=0
 
-        if IsDiabetes==True: IsDiabetes=1
+        if IsDiabetes==True: IsPenyakit=1
         else: IsDiabetes=0
 
-        if IsHepatitis==True: IsHepatitis=1
+        if IsHepatitis==True: IsPenyakit=1
         else: IsHepatitis=0
 
-        if IsHipertensi==True: IsHipertensi=1
+        if IsHipertensi==True: IsPenyakit=1
         else: IsHipertensi=0
 
-        if IsJantung==True: IsJantung=1
+        if IsJantung==True: IsPenyakit=1
         else: IsJantung=0
 
-        if IsPe==True: IsPe=1
+        if IsPe==True: IsPenyakit=1
         else: IsPe=0
 
-        if IsPeb==True: IsPeb=1
+        if IsPeb==True: IsPenyakit=1
         else: IsPeb=0
 
-        if IsTBC==True: IsTBC=1
+        if IsTBC==True: IsPenyakit=1
         else: IsTBC=0
 
-        if IsMagh==True: IsMagh=1
+        if IsMagh==True: IsPenyakit=1
         else: IsMagh=0
+
+        
         #Pilih riwayat proteinuira
         proteinuria = st.selectbox(
         'Proteinuira?',
@@ -327,11 +352,10 @@ if choose=="Prediction":
             model = joblib.load('model_c45.sav')
         
             X_predict = [[pendidikan, pekerjaan, umur, usia_kehamilan,
-                    BP, BB, jenis, frekuensi, paritas,
-                    abortus, riwayat_melahirkan, IsTBC, IsAsma,
-                    IsDiabetes, IsHipertensi, IsHepatitis, 
-                    IsJantung, IsPe, IsPeb, IsBatuEmpedu,
-                    IsMagh, proteinuria]]
+                    BP, BB, jenis, paritas,
+                    abortus, riwayat_melahirkan,
+                    IsPenyakit, proteinuria]]
+
             # st.write(X_predict[0])
             if np.array(X_predict[0]).sum()>999:
                 st.error('Isi semua form terlebih dahulu.')
