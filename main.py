@@ -17,8 +17,12 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 #parameter
 text_option = '- Pilih -'
+update_css = """<style>
+        .appview-container, .main, .block-container{padding-top: 0rem}
+</style>"""
 
 st.set_page_config(layout="wide")
+st.markdown(update_css, unsafe_allow_html=True)
 
 matplotlib.use('agg')
 _lock=RendererAgg.lock
@@ -30,7 +34,6 @@ hide_dataframe_row_index = """
             .blank {display:none}
             </style>
             """
-
 # Inject CSS with Markdown
 st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 
@@ -51,8 +54,11 @@ with st.sidebar:
 
 if choose=="Preparation":
     #judul app
-    st.title('Preparation')
+    st.title('Prediksi Preklampsia dengan C4.5')
+    
 
+    st.write('')
+    st.subheader('Preparation')
     st.write('')
 
     #set grid
@@ -91,18 +97,9 @@ if choose=="Preparation":
             if st.button('Re-Test'):
                 with st.spinner("Re-training dataset..."):
                     clf = C45(attrNames=clean.columns[:-1])
-                    X_train, X_test, y_train, y_test = train_test_split(clean[clean.columns[:-1]], clean['Decision'], test_size=0.2, shuffle=True)
                     C45(attrNames=['n', 'pe', 'peb'])
-                    train = clf.fit(X_train, y_train)
-                    test = clf.predict(X_test)
-                    eval = precision_recall_fscore_support(y_test, test)
 
-                    st.warning(f'Split testing data 20%')
-                    metrik = [[1, accuracy_score(y_test, test), eval[0].mean(), eval[1].mean(), eval[2].mean()]]
-                    df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
-                    st.dataframe(df_metrik)
-
-                    kfold = KFold(n_splits=10, shuffle=True)
+                    kfold = KFold(10, True)
                     train_res = []
                     test_res = []
                     metrik = []
@@ -124,6 +121,11 @@ if choose=="Preparation":
                         
                     df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
                     st.dataframe(df_metrik)
+
+                    st.warning('Rata-rata performa pengujian')
+                    avg_metrik = [[1, df_metrik['Accuracy'].mean(), df_metrik['Precision'].mean(), df_metrik['Recall'].mean(), df_metrik['F1-Score'].mean()]]
+                    df_avg_metrik = pd.DataFrame(avg_metrik, columns=['No', 'Avg Accuracy', 'Avg Precision', 'Avg Recall', 'Avg F1-Score'])
+                    st.dataframe(df_avg_metrik)
                 
                 joblib.dump(clf, 'model_c45.sav')
                 st.success('Model saved')
@@ -132,18 +134,9 @@ if choose=="Preparation":
             else:
                 with st.spinner("Training dataset..."):
                     clf = C45(attrNames=clean.columns[:-1])
-                    X_train, X_test, y_train, y_test = train_test_split(clean[clean.columns[:-1]], clean['Decision'], test_size=0.2, shuffle=True)
                     C45(attrNames=['n', 'pe', 'peb'])
-                    train = clf.fit(X_train, y_train)
-                    test = clf.predict(X_test)
-                    eval = precision_recall_fscore_support(y_test, test)
 
-                    st.warning(f'Split testing data 20%')
-                    metrik = [[1, accuracy_score(y_test, test), eval[0].mean(), eval[1].mean(), eval[2].mean()]]
-                    df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
-                    st.dataframe(df_metrik)
-
-                    kfold = KFold(n_splits=10, shuffle=True)
+                    kfold = KFold(10, True)
                     train_res = []
                     test_res = []
                     metrik = []
@@ -165,6 +158,11 @@ if choose=="Preparation":
                         
                     df_metrik = pd.DataFrame(metrik, columns=['No', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
                     st.dataframe(df_metrik)
+
+                    st.warning('Rata-rata performa pengujian')
+                    avg_metrik = [[1, df_metrik['Accuracy'].mean(), df_metrik['Precision'].mean(), df_metrik['Recall'].mean(), df_metrik['F1-Score'].mean()]]
+                    df_avg_metrik = pd.DataFrame(avg_metrik, columns=['No', 'Avg Accuracy', 'Avg Precision', 'Avg Recall', 'Avg F1-Score'])
+                    st.dataframe(df_avg_metrik)
                 
                 joblib.dump(clf, 'model_c45.sav')
                 st.success('Model saved')
@@ -176,6 +174,8 @@ if choose=="Prediction":
     #judul app
     st.title('Prediksi Preklampsia dengan C4.5')
 
+    st.write('')
+    st.subheader('Prediksi')
     st.write('')
 
     #set grid
@@ -191,10 +191,10 @@ if choose=="Prediction":
         'Pendidikan Terakhir?',
         (text_option,'SD', 'SMP', 'SMA', 'PERGURUAN TINGGI'))
         if pendidikan==text_option: pendidikan=1000
-        if pendidikan=='SD': pendidikan=1
-        if pendidikan=='SMP': pendidikan=2
-        if pendidikan=='SMA': pendidikan=3
-        if pendidikan=='PERGURUAN TINGGI': pendidikan=4            
+        if pendidikan=='SD': pendidikan=0
+        if pendidikan=='SMP': pendidikan=1
+        if pendidikan=='SMA': pendidikan=2
+        if pendidikan=='PERGURUAN TINGGI': pendidikan=3
 
         #Pilih Pekerjaan
         pekerjaan = st.selectbox(
@@ -301,6 +301,7 @@ if choose=="Prediction":
         IsPeb = st.checkbox('Peb')
         IsTBC = st.checkbox('TBC')
         IsMagh = st.checkbox('Magh')
+        IsOther = st.checkbox('Penyakit Lainnya')
 
         IsPenyakit=0
         if IsAsma==True: IsPenyakit=1
@@ -332,6 +333,9 @@ if choose=="Prediction":
 
         if IsMagh==True: IsPenyakit=1
         else: IsMagh=0
+
+        if IsOther==True: IsPenyakit=1
+        else: IsOther=0
 
         
         #Pilih riwayat proteinuira
