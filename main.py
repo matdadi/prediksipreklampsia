@@ -99,7 +99,7 @@ if choose=="Preparation":
                     clf = C45(attrNames=clean.columns[:-1])
                     C45(attrNames=['n', 'pe', 'peb'])
 
-                    kfold = KFold(10, True)
+                    kfold = KFold(n_splits=10, shuffle=True)
                     train_res = []
                     test_res = []
                     metrik = []
@@ -136,7 +136,7 @@ if choose=="Preparation":
                     clf = C45(attrNames=clean.columns[:-1])
                     C45(attrNames=['n', 'pe', 'peb'])
 
-                    kfold = KFold(10, True)
+                    kfold = KFold(n_splits=10, shuffle=True)
                     train_res = []
                     test_res = []
                     metrik = []
